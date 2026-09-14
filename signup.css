@@ -1,0 +1,154 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    background-image: url("bg1.jpg");
+    background-repeat: repeat;
+    background-position: top left;
+    background-size: auto;
+}
+
+.signup-container {
+    min-height: 100vh;
+    width: 100%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 20px;
+}
+
+.signup-box {
+    width: 400px;
+
+    background: #fdeded;
+
+    padding: 40px;
+
+    border-radius: 12px;
+
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.signup-box h2 {
+    text-align: center;
+    color: #000;
+    font-size: 21px;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #888;
+    font-size: 13px;
+    margin-bottom: 25px;
+}
+
+.error-message {
+    color: #c0392b;
+    text-align: center;
+    font-size: 13px;
+    margin-bottom: 15px;
+}
+
+.input-box {
+    margin-bottom: 15px;
+}
+
+.input-box label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #000;
+    font-size: 14px;
+}
+
+.input-box input {
+    display: block;
+    width: 100%;
+    padding: 10px;
+
+    border: 1px solid #ccc;
+    border-radius: 6px;
+
+    outline: none;
+    font-size: 14px;
+}
+
+.input-box input:focus {
+    border-color: #f4abb4;
+    box-shadow: 0 0 5px rgba(244, 171, 180, 0.3);
+}
+
+.signup-box button {
+    display: block;
+    width: 100%;
+
+    padding: 10px;
+    margin-top: 5px;
+
+    background: #fad6d6;
+    color: #000;
+
+    border: none;
+    border-radius: 6px;
+
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.signup-box button:hover {
+    background: #a97d5f;
+    color: white;
+}
+
+.login-link {
+    text-align: center;
+    margin-top: 20px;
+
+    color: #000;
+    font-size: 13px;
+}
+
+.login-link a {
+    color: #a97d5f;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}
+
+.user {
+    display: flex;
+    justify-content: space-between;
+    text-align: center;
+}
+
+.user div {
+    width: 45%;
+}
+
+.user input {
+    display: block;
+    margiin: 10px auto;
+}
+
+@media (max-width: 500px) {
+
+    .signup-box {
+        width: 100%;
+        padding: 30px 25px;
+    }
+
+    .signup-box h2 {
+        font-size: 18px;
+    }
+}

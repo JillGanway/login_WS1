@@ -1,0 +1,720 @@
+* {
+
+    margin: 0;
+
+    padding: 0;
+
+    box-sizing: border-box;
+
+    font-family: 'Poppins', sans-serif;
+
+}
+
+
+/* =========================
+   BODY
+========================= */
+
+body {
+
+    min-height: 100vh;
+
+    background-image: url("bg1.jpg");
+
+    background-repeat: repeat;
+
+    background-position: top left;
+
+}
+
+
+
+/* =========================
+   CONTAINER
+========================= */
+
+.container {
+
+    display: flex;
+
+    min-height: 100vh;
+
+}
+
+
+
+/* =========================
+   SIDEBAR
+========================= */
+
+.sidebar {
+
+    width: 120px;
+
+    height: 100vh;
+
+    background: #e5b3b3;
+
+    padding: 15px 10px;
+
+    position: fixed;
+
+    left: 0;
+
+    top: 0;
+
+}
+
+
+
+/* =========================
+   PROFILE
+========================= */
+
+.profile {
+
+    text-align: center;
+
+    margin-bottom: 20px;
+
+}
+
+
+.profile img {
+
+    width: 85px;
+
+    height: 85px;
+
+    object-fit: cover;
+
+    border-radius: 7px;
+
+    border: 5px solid white;
+
+    margin-bottom: 5px;
+
+}
+
+
+.profile h3 {
+
+    font-size: 10px;
+
+    color: #000;
+
+}
+
+
+.profile p {
+
+    font-size: 7px;
+
+    color: #555;
+
+}
+
+
+
+/* =========================
+   MENU
+========================= */
+
+.menu {
+
+    width: 100%;
+
+}
+
+
+.menu a {
+
+    display: block;
+
+    text-decoration: none;
+
+    text-align: center;
+
+    color: #000;
+
+    font-size: 8px;
+
+    font-weight: 500;
+
+    padding: 7px 2px;
+
+    margin: 3px 0;
+
+}
+
+
+.menu a:hover {
+
+    background: #f3cccc;
+
+    border-radius: 4px;
+
+}
+
+
+.menu a.active {
+
+    background: #f3cccc;
+
+    border-radius: 4px;
+
+}
+
+
+
+/* =========================
+   MAIN CONTENT
+========================= */
+
+.main-content {
+
+    margin-left: 120px;
+
+    width: calc(100% - 120px);
+
+    padding: 25px 35px;
+
+}
+
+
+
+/* =========================
+   WELCOME
+========================= */
+
+.welcome {
+
+    background: #e5b3b3;
+
+    padding: 20px 25px;
+
+    border-radius: 6px;
+
+    margin-bottom: 25px;
+
+}
+
+
+.welcome h1 {
+
+    font-size: 23px;
+
+    font-weight: 600;
+
+    color: #000;
+
+}
+
+
+
+/* =========================
+   ATTENDANCE
+========================= */
+
+.attendance-box {
+
+    background: #e5b3b3;
+
+    padding: 12px 25px;
+
+    border-radius: 6px;
+
+    margin-bottom: 18px;
+
+}
+
+
+.attendance-title {
+
+    text-align: center;
+
+    margin-bottom: 5px;
+
+}
+
+
+.attendance-title h2 {
+
+    font-size: 10px;
+
+    font-weight: 500;
+
+}
+
+
+.legend {
+
+    text-align: center;
+
+    font-size: 7px;
+
+    margin-bottom: 10px;
+
+}
+
+
+.legend span {
+
+    margin: 0 4px;
+
+}
+
+
+.blue-dot {
+
+    display: inline-block;
+
+    width: 6px;
+
+    height: 6px;
+
+    border-radius: 50%;
+
+    background: #4d82e8;
+
+}
+
+
+.purple-dot {
+
+    display: inline-block;
+
+    width: 6px;
+
+    height: 6px;
+
+    border-radius: 50%;
+
+    background: #a77ce5;
+
+}
+
+
+
+/* =========================
+   CHART
+========================= */
+
+.chart-row {
+
+    display: flex;
+
+    align-items: center;
+
+    margin-bottom: 10px;
+
+}
+
+
+.month {
+
+    width: 30px;
+
+    font-size: 8px;
+
+    color: #000;
+
+}
+
+
+.chart-bars {
+
+    width: 90%;
+
+}
+
+
+.absence-bar {
+
+    height: 14px;
+
+    background: #4d82e8;
+
+    border-radius: 2px;
+
+    margin-bottom: 3px;
+
+}
+
+
+.present-bar {
+
+    height: 14px;
+
+    background: #a77ce5;
+
+    border-radius: 2px;
+
+}
+
+
+
+/* BAR LENGTHS */
+
+.january-absence {
+
+    width: 90%;
+
+}
+
+
+.january-present {
+
+    width: 60%;
+
+}
+
+
+.february-absence {
+
+    width: 75%;
+
+}
+
+
+.february-present {
+
+    width: 45%;
+
+}
+
+
+.march-absence {
+
+    width: 55%;
+
+}
+
+
+.march-present {
+
+    width: 30%;
+
+}
+
+
+
+/* =========================
+   TABLES
+========================= */
+
+.tables {
+
+    display: flex;
+
+    gap: 40px;
+
+    margin-bottom: 30px;
+
+}
+
+
+.table-box {
+
+    width: 50%;
+
+    background: #e5b3b3;
+
+    padding: 5px;
+
+    border-radius: 5px;
+
+}
+
+
+.table-box h3 {
+
+    text-align: center;
+
+    font-size: 9px;
+
+    font-weight: 500;
+
+    margin-bottom: 3px;
+
+}
+
+
+
+/* =========================
+   TABLE
+========================= */
+
+table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+}
+
+
+th {
+
+    background: #f3cccc;
+
+    border: 1px solid #000;
+
+    height: 32px;
+
+    font-size: 7px;
+
+    font-weight: 500;
+
+}
+
+
+td {
+
+    background: #e5b3b3;
+
+    border: 1px solid #000;
+
+    height: 25px;
+
+    text-align: center;
+
+    font-size: 8px;
+
+}
+
+
+
+/* =========================
+   SECTIONS
+========================= */
+
+.section {
+
+    background: #e5b3b3;
+
+    padding: 15px 20px;
+
+    border-radius: 6px;
+
+    margin-bottom: 25px;
+
+}
+
+
+.section h2 {
+
+    text-align: center;
+
+    font-size: 12px;
+
+    font-weight: 500;
+
+    margin-bottom: 15px;
+
+}
+
+
+
+/* =========================
+   SCHOOL WORK
+========================= */
+
+.work {
+
+    background: #f3cccc;
+
+    padding: 12px;
+
+    margin-bottom: 10px;
+
+    border-radius: 5px;
+
+}
+
+
+.work h3 {
+
+    font-size: 10px;
+
+    margin-bottom: 5px;
+
+}
+
+
+.work p {
+
+    font-size: 8px;
+
+    margin-bottom: 8px;
+
+}
+
+
+.work button {
+
+    background: #e5b3b3;
+
+    border: 1px solid #000;
+
+    padding: 5px 10px;
+
+    font-size: 7px;
+
+    cursor: pointer;
+
+}
+
+
+.work button:hover {
+
+    background: #d99f9f;
+
+}
+
+
+
+/* =========================
+   NOTIFICATIONS
+========================= */
+
+.notification {
+
+    background: #f3cccc;
+
+    padding: 12px;
+
+    border-radius: 5px;
+
+    margin-bottom: 10px;
+
+}
+
+
+.notification b {
+
+    font-size: 10px;
+
+}
+
+
+.notification p {
+
+    font-size: 8px;
+
+    margin-top: 4px;
+
+}
+
+
+
+/* =========================
+   SETTINGS
+========================= */
+
+.setting-row {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    background: #f3cccc;
+
+    padding: 10px;
+
+    margin-bottom: 8px;
+
+    border-radius: 5px;
+
+}
+
+
+.setting-row span {
+
+    font-size: 9px;
+
+}
+
+
+.setting-row button {
+
+    background: #e5b3b3;
+
+    border: 1px solid #000;
+
+    padding: 4px 10px;
+
+    font-size: 7px;
+
+    cursor: pointer;
+
+}
+
+
+.setting-row button:hover {
+
+    background: #d99f9f;
+
+}
+
+
+
+/* =========================
+   BOTTOM SPACE
+========================= */
+
+.bottom-space {
+
+    height: 100px;
+
+}
+
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 800px) {
+
+    .sidebar {
+
+        width: 100px;
+
+    }
+
+
+    .main-content {
+
+        margin-left: 100px;
+
+        width: calc(100% - 100px);
+
+        padding: 20px;
+
+    }
+
+
+    .tables {
+
+        flex-direction: column;
+
+    }
+
+
+    .table-box {
+
+        width: 100%;
+
+    }
+
+
+    .welcome h1 {
+
+        font-size: 17px;
+
+    }
+
+}
