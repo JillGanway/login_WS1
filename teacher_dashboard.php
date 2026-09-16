@@ -45,8 +45,24 @@ CREATE TABLE IF NOT EXISTS activities (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )");
 
-$conn->query("
-CREATE TABLE IF NOT EXISTS assignments (
+
+/* Make sure activity submission columns exist. */
+$activity_columns = [
+    "teacher_file" => "VARCHAR(255) NULL",
+    "student_file" => "VARCHAR(255) NULL",
+    "submission_status" => "VARCHAR(30) NOT NULL DEFAULT 'Not Submitted'",
+    "submitted_at" => "DATETIME NULL"
+];
+
+foreach ($activity_columns as $column_name => $column_definition) {
+    $column_check = $conn->query("SHOW COLUMNS FROM activities LIKE '$column_name'");
+    if ($column_check && $column_check->num_rows === 0) {
+        $conn->query("ALTER TABLE activities ADD COLUMN $column_name $column_definition");
+    }
+}
+
+$conn->query(
+"CREATE TABLE IF NOT EXISTS assignments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     teacher_id INT NOT NULL,
     student_id INT NOT NULL,
@@ -248,25 +264,35 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         if ($student_check > 0 && $subject_check > 0) {
 
-            $stmt = $conn->prepare("
-                INSERT INTO attendance
-                (teacher_id, student_id, subject_id, attendance_date, status)
-                VALUES (?, ?, ?, ?, ?)
+            $check_attendance = $conn->prepare("
+                SELECT id FROM attendance
+                WHERE teacher_id = ? AND student_id = ? AND subject_id = ? AND attendance_date = ?
+                LIMIT 1
             ");
+            $check_attendance->bind_param("iiis", $teacher_id, $student_id, $subject_id, $attendance_date);
+            $check_attendance->execute();
+            $existing_attendance = $check_attendance->get_result()->fetch_assoc();
+            $check_attendance->close();
 
-            $stmt->bind_param(
-                "iiiss",
-                $teacher_id,
-                $student_id,
-                $subject_id,
-                $attendance_date,
-                $status
-            );
-
-            if ($stmt->execute()) {
-                logActivity($conn, $teacher_id, $username, "teacher", "Record Attendance");
+            if ($existing_attendance) {
+                $stmt = $conn->prepare("UPDATE attendance SET status = ? WHERE id = ?");
+                $stmt->bind_param("si", $status, $existing_attendance["id"]);
+                if ($stmt->execute()) {
+                    logActivity($conn, $teacher_id, $username, "teacher", "Update Attendance");
+                }
+                $stmt->close();
+            } else {
+                $stmt = $conn->prepare("
+                    INSERT INTO attendance
+                    (teacher_id, student_id, subject_id, attendance_date, status)
+                    VALUES (?, ?, ?, ?, ?)
+                ");
+                $stmt->bind_param("iiiss", $teacher_id, $student_id, $subject_id, $attendance_date, $status);
+                if ($stmt->execute()) {
+                    logActivity($conn, $teacher_id, $username, "teacher", "Record Attendance");
+                }
+                $stmt->close();
             }
-            $stmt->close();
         }
 
         header("Location: teacher_dashboard.php#attendance");
@@ -380,6 +406,51 @@ $assignments = $conn->query("
     ORDER BY a.due_date ASC
 ");
 
+$attendance_chart_data = [];
+
+$attendance_chart_query = $conn->query("
+    SELECT MONTH(attendance_date) AS month_number,
+           SUM(CASE WHEN LOWER(status) = 'absent' THEN 1 ELSE 0 END) AS absence,
+           SUM(CASE WHEN LOWER(status) = 'present' THEN 1 ELSE 0 END) AS present
+    FROM attendance
+    WHERE teacher_id = $teacher_id
+    GROUP BY MONTH(attendance_date)
+    ORDER BY MONTH(attendance_date)
+");
+
+$month_names = [1 => "Jan", 2 => "Feb", 3 => "Mar", 4 => "Apr", 5 => "May", 6 => "Jun", 7 => "Jul", 8 => "Aug", 9 => "Sep", 10 => "Oct", 11 => "Nov", 12 => "Dec"];
+
+if ($attendance_chart_query) {
+    while ($row = $attendance_chart_query->fetch_assoc()) {
+        $attendance_chart_data[(int)$row["month_number"]] = [
+            "absence" => (int)$row["absence"],
+            "present" => (int)$row["present"]
+        ];
+    }
+}
+
+$chart_months = range(1, 12);
+$chart_max = 0;
+
+foreach ($chart_months as $month_number) {
+    $absence = $attendance_chart_data[$month_number]["absence"] ?? 0;
+    $present = $attendance_chart_data[$month_number]["present"] ?? 0;
+    $chart_max = max($chart_max, $absence, $present);
+}
+
+$attendance_chart = [];
+foreach ($chart_months as $month_number) {
+    $absence = $attendance_chart_data[$month_number]["absence"] ?? 0;
+    $present = $attendance_chart_data[$month_number]["present"] ?? 0;
+    $attendance_chart[] = [
+        "month" => $month_names[$month_number],
+        "absence" => $absence,
+        "present" => $present,
+        "absence_width" => $chart_max > 0 ? round(($absence / $chart_max) * 100, 2) : 0,
+        "present_width" => $chart_max > 0 ? round(($present / $chart_max) * 100, 2) : 0
+    ];
+}
+
 $attendance_records = $conn->query("
     SELECT a.attendance_date, a.status,
            u.full_name AS student_name,
@@ -465,57 +536,23 @@ $performance_records = $conn->query("
         <div class="attendance-box">
 
             <div class="attendance-title">
-
                 <h2>ATTENDANCE OVERVIEW</h2>
-
             </div>
 
             <div class="legend">
-
-                <span>
-                    <span class="blue-dot"></span>
-                    ABSENCE
-                </span>
-
-                <span>
-                    <span class="purple-dot"></span>
-                    PRESENT
-                </span>
-
+                <span><span class="blue-dot"></span>ABSENCE</span>
+                <span><span class="purple-dot"></span>PRESENT</span>
             </div>
 
-            <div class="chart-row">
-
-                <span class="month">Jan</span>
-
-                <div class="chart-bars">
-                    <div class="absence-bar january-absence"></div>
-                    <div class="present-bar january-present"></div>
+            <?php foreach ($attendance_chart as $chart): ?>
+                <div class="chart-row">
+                    <span class="month"><?php echo htmlspecialchars($chart["month"]); ?></span>
+                    <div class="chart-bars">
+                        <div class="absence-bar" style="width: <?php echo $chart["absence_width"]; ?>%;" title="Absence: <?php echo $chart["absence"]; ?>"></div>
+                        <div class="present-bar" style="width: <?php echo $chart["present_width"]; ?>%;" title="Present: <?php echo $chart["present"]; ?>"></div>
+                    </div>
                 </div>
-
-            </div>
-
-            <div class="chart-row">
-
-                <span class="month">Feb</span>
-
-                <div class="chart-bars">
-                    <div class="absence-bar february-absence"></div>
-                    <div class="present-bar february-present"></div>
-                </div>
-
-            </div>
-
-            <div class="chart-row">
-
-                <span class="month">Mar</span>
-
-                <div class="chart-bars">
-                    <div class="absence-bar march-absence"></div>
-                    <div class="present-bar march-present"></div>
-                </div>
-
-            </div>
+            <?php endforeach; ?>
 
         </div>
 

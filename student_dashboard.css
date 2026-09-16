@@ -10,11 +10,6 @@
 
 }
 
-
-/* =========================
-   BODY
-========================= */
-
 body {
 
     min-height: 100vh;
@@ -27,12 +22,6 @@ body {
 
 }
 
-
-
-/* =========================
-   CONTAINER
-========================= */
-
 .container {
 
     display: flex;
@@ -40,12 +29,6 @@ body {
     min-height: 100vh;
 
 }
-
-
-
-/* =========================
-   SIDEBAR
-========================= */
 
 .sidebar {
 
@@ -65,11 +48,6 @@ body {
 
 }
 
-
-
-/* =========================
-   PROFILE
-========================= */
 
 .profile {
 
@@ -113,12 +91,6 @@ body {
     color: #555;
 
 }
-
-
-
-/* =========================
-   MENU
-========================= */
 
 .menu {
 
@@ -166,11 +138,6 @@ body {
 }
 
 
-
-/* =========================
-   MAIN CONTENT
-========================= */
-
 .main-content {
 
     margin-left: 120px;
@@ -181,11 +148,6 @@ body {
 
 }
 
-
-
-/* =========================
-   WELCOME
-========================= */
 
 .welcome {
 
@@ -209,12 +171,6 @@ body {
     color: #000;
 
 }
-
-
-
-/* =========================
-   ATTENDANCE
-========================= */
 
 .attendance-box {
 
@@ -253,11 +209,6 @@ body {
 
 }
 
-
-
-/* =========================
-   ATTENDANCE SUMMARY
-========================= */
 
 .attendance-summary {
 
@@ -305,10 +256,63 @@ body {
 }
 
 
+.legend {
+    text-align: center;
+    font-size: 7px;
+    margin-bottom: 10px;
+}
 
-/* =========================
-   SECTION
-========================= */
+.legend span {
+    margin: 0 4px;
+}
+
+.blue-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #c8879a;
+}
+
+.purple-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #a77aa8;
+}
+
+.chart-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.month {
+    width: 30px;
+    font-size: 8px;
+    color: #000;
+}
+
+.chart-bars {
+    width: 90%;
+}
+
+.absence-bar {
+    height: 14px;
+    background: #c8879a;
+    border-radius: 2px;
+    margin-bottom: 3px;
+    min-width: 0;
+}
+
+.present-bar {
+    height: 14px;
+    background: #a77aa8;
+    border-radius: 2px;
+    min-width: 0;
+}
+
 
 .section {
 
@@ -335,11 +339,6 @@ body {
 
 }
 
-
-
-/* =========================
-   TABLE
-========================= */
 
 table {
 
@@ -379,11 +378,6 @@ td {
 
 }
 
-
-
-/* =========================
-   ACTIVITIES
-========================= */
 
 .activity {
 
@@ -433,11 +427,6 @@ td {
 }
 
 
-
-/* =========================
-   ACTIVITY STATUS
-========================= */
-
 .unfinished-status {
 
     background: #f0b0b0;
@@ -457,12 +446,6 @@ td {
     background: #b9dcae;
 
 }
-
-
-
-/* =========================
-   NOTIFICATION
-========================= */
 
 .notification {
 
@@ -490,11 +473,6 @@ td {
 
 }
 
-
-
-/* =========================
-   SETTINGS
-========================= */
 
 .setting-row {
 
@@ -544,22 +522,12 @@ td {
 }
 
 
-
-/* =========================
-   BOTTOM SPACE
-========================= */
-
 .bottom-space {
 
     height: 100px;
 
 }
 
-
-
-/* =========================
-   MOBILE
-========================= */
 
 @media (max-width: 800px) {
 

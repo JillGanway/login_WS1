@@ -24,7 +24,38 @@ if (!$user) {
 
 $full_name = $user["full_name"];
 $username = $user["username"];
+
 $role = $user["role"];
+
+/* Make sure the activity table and submission columns exist. */
+$conn->query("
+CREATE TABLE IF NOT EXISTS activities (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    teacher_id INT NOT NULL,
+    student_id INT NOT NULL,
+    subject_id INT NOT NULL,
+    activity_name VARCHAR(255) NOT NULL,
+    activity_date DATE NOT NULL,
+    teacher_file VARCHAR(255) NULL,
+    student_file VARCHAR(255) NULL,
+    submission_status VARCHAR(30) NOT NULL DEFAULT 'Not Submitted',
+    submitted_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)");
+
+$activity_columns = [
+    "teacher_file" => "VARCHAR(255) NULL",
+    "student_file" => "VARCHAR(255) NULL",
+    "submission_status" => "VARCHAR(30) NOT NULL DEFAULT 'Not Submitted'",
+    "submitted_at" => "DATETIME NULL"
+];
+
+foreach ($activity_columns as $column_name => $column_definition) {
+    $column_check = $conn->query("SHOW COLUMNS FROM activities LIKE '$column_name'");
+    if ($column_check && $column_check->num_rows === 0) {
+        $conn->query("ALTER TABLE activities ADD COLUMN $column_name $column_definition");
+    }
+}
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["submit_activity"])) {
     $activity_id = intval($_POST["activity_id"]);
@@ -161,6 +192,7 @@ $attendance = $conn->query(
 
         <nav class="menu">
             <a href="#dashboard" class="active">Dashboard</a>
+            <a href="#attendance-overview">Attendance Overview</a>
             <a href="#attendance">Attendance</a>
             <a href="#school-work">School Work</a>
             <a href="#assignments">Assignments</a>
@@ -180,6 +212,38 @@ $attendance = $conn->query(
         <section id="dashboard" class="welcome">
             <h1>Welcome, <?php echo htmlspecialchars($full_name); ?>!</h1>
             <p>Welcome to your student dashboard.</p>
+        </section>
+
+
+        <section id="attendance-overview" class="attendance-box">
+
+            <div class="attendance-title">
+                <h2>ATTENDANCE OVERVIEW</h2>
+            </div>
+
+            <div class="legend">
+                <span><span class="blue-dot"></span>ABSENCE</span>
+                <span><span class="purple-dot"></span>PRESENT</span>
+            </div>
+
+            <?php foreach ($attendance_chart as $chart): ?>
+                <div class="chart-row">
+                    <span class="month"><?php echo htmlspecialchars($chart["month"]); ?></span>
+
+                    <div class="chart-bars">
+                        <div class="absence-bar"
+                             style="width: <?php echo $chart["absence_width"]; ?>%;"
+                             title="Absence: <?php echo $chart["absence"]; ?>">
+                        </div>
+
+                        <div class="present-bar"
+                             style="width: <?php echo $chart["present_width"]; ?>%;"
+                             title="Present: <?php echo $chart["present"]; ?>">
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+
         </section>
 
         <section id="subjects" class="section">
@@ -572,10 +636,26 @@ $attendance = $conn->query(
 
             <h2>Notifications</h2>
 
-            <div class="notification">
-                <h3>Account Approved</h3>
-                <p>Your account has been approved by the administrator.</p>
-            </div>
+            <?php if ($notifications && $notifications->num_rows > 0): ?>
+
+                <?php while ($notification = $notifications->fetch_assoc()): ?>
+
+                    <div class="notification">
+                        <h3><?php echo htmlspecialchars($notification["title"]); ?></h3>
+                        <p><?php echo htmlspecialchars($notification["message"]); ?></p>
+                        <small><?php echo htmlspecialchars($notification["created_at"]); ?></small>
+                    </div>
+
+                <?php endwhile; ?>
+
+            <?php else: ?>
+
+                <div class="notification">
+                    <h3>No notifications</h3>
+                    <p>No new notifications.</p>
+                </div>
+
+            <?php endif; ?>
 
         </section>
 

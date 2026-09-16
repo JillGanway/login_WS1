@@ -11,10 +11,6 @@
 }
 
 
-/* =========================
-   BODY
-========================= */
-
 body {
 
     min-height: 100vh;
@@ -28,11 +24,6 @@ body {
 }
 
 
-
-/* =========================
-   CONTAINER
-========================= */
-
 .container {
 
     display: flex;
@@ -40,12 +31,6 @@ body {
     min-height: 100vh;
 
 }
-
-
-
-/* =========================
-   SIDEBAR
-========================= */
 
 .sidebar {
 
@@ -64,12 +49,6 @@ body {
     top: 0;
 
 }
-
-
-
-/* =========================
-   PROFILE
-========================= */
 
 .profile {
 
@@ -113,12 +92,6 @@ body {
     color: #555;
 
 }
-
-
-
-/* =========================
-   MENU
-========================= */
 
 .menu {
 
@@ -165,12 +138,6 @@ body {
 
 }
 
-
-
-/* =========================
-   MAIN CONTENT
-========================= */
-
 .main-content {
 
     margin-left: 120px;
@@ -180,12 +147,6 @@ body {
     padding: 25px 35px;
 
 }
-
-
-
-/* =========================
-   WELCOME
-========================= */
 
 .welcome {
 
@@ -207,12 +168,6 @@ body {
     font-weight: 600;
 
 }
-
-
-
-/* =========================
-   OVERVIEW
-========================= */
 
 .overview {
 
@@ -259,11 +214,78 @@ body {
 
 }
 
+.attendance-box {
+    background: #e5b3b3;
+    padding: 12px 25px;
+    border-radius: 6px;
+    margin-bottom: 25px;
+}
 
+.attendance-title {
+    text-align: center;
+    margin-bottom: 5px;
+}
 
-/* =========================
-   SECTIONS
-========================= */
+.attendance-title h2 {
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.legend {
+    text-align: center;
+    font-size: 7px;
+    margin-bottom: 10px;
+}
+
+.legend span {
+    margin: 0 4px;
+}
+
+.blue-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #c8879a;
+}
+
+.purple-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #a77aa8;
+}
+
+.chart-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.month {
+    width: 30px;
+    font-size: 8px;
+    color: #000;
+}
+
+.chart-bars {
+    width: 90%;
+}
+
+.absence-bar {
+    height: 14px;
+    background: #c8879a;
+    border-radius: 2px;
+    margin-bottom: 3px;
+}
+
+.present-bar {
+    height: 14px;
+    background: #a77aa8;
+    border-radius: 2px;
+}
+
 
 .section {
 
@@ -301,11 +323,6 @@ body {
 
 }
 
-
-
-/* =========================
-   TABLE
-========================= */
 
 table {
 
@@ -350,11 +367,6 @@ td {
 }
 
 
-
-/* =========================
-   STATUS
-========================= */
-
 .status {
 
     display: inline-block;
@@ -395,12 +407,6 @@ td {
 
 }
 
-
-
-/* =========================
-   NOTIFICATIONS
-========================= */
-
 .notification {
 
     background: #f3cccc;
@@ -426,12 +432,6 @@ td {
     font-size: 8px;
 
 }
-
-
-
-/* =========================
-   SETTINGS
-========================= */
 
 .setting-row {
 
@@ -480,23 +480,12 @@ td {
 
 }
 
-
-
-/* =========================
-   BOTTOM SPACE
-========================= */
-
 .bottom-space {
 
     height: 150px;
 
 }
 
-
-
-/* =========================
-   MOBILE
-========================= */
 
 @media (max-width: 800px) {
 

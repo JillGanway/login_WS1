@@ -7,7 +7,38 @@ if (!isset($_SESSION["admin_id"])) {
     exit;
 }
 
+
 $admin_username = $_SESSION["admin_username"];
+
+/* Make sure activity submission columns exist. */
+$conn->query("
+CREATE TABLE IF NOT EXISTS activities (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    teacher_id INT NOT NULL,
+    student_id INT NOT NULL,
+    subject_id INT NOT NULL,
+    activity_name VARCHAR(255) NOT NULL,
+    activity_date DATE NOT NULL,
+    teacher_file VARCHAR(255) NULL,
+    student_file VARCHAR(255) NULL,
+    submission_status VARCHAR(30) NOT NULL DEFAULT 'Not Submitted',
+    submitted_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)");
+
+$activity_columns = [
+    "teacher_file" => "VARCHAR(255) NULL",
+    "student_file" => "VARCHAR(255) NULL",
+    "submission_status" => "VARCHAR(30) NOT NULL DEFAULT 'Not Submitted'",
+    "submitted_at" => "DATETIME NULL"
+];
+
+foreach ($activity_columns as $column_name => $column_definition) {
+    $column_check = $conn->query("SHOW COLUMNS FROM activities LIKE '$column_name'");
+    if ($column_check && $column_check->num_rows === 0) {
+        $conn->query("ALTER TABLE activities ADD COLUMN $column_name $column_definition");
+    }
+}
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
@@ -268,6 +299,68 @@ $teacher_monitor = $conn->query(
      WHERE u.role = 'teacher' AND u.is_admin = 0 AND u.status = 'approved'
      ORDER BY u.full_name"
 );
+
+
+$all_assignments = $conn->query(
+    "SELECT a.assignment_name, a.due_date,
+            t.full_name AS teacher_name,
+            s.full_name AS student_name,
+            sub.subject_name
+     FROM assignments a
+     JOIN users t ON a.teacher_id = t.id
+     JOIN users s ON a.student_id = s.id
+     JOIN subjects sub ON a.subject_id = sub.id
+     ORDER BY a.due_date ASC, a.id DESC"
+);
+
+$attendance_chart_data = [];
+
+$attendance_chart_query = $conn->query("
+    SELECT MONTH(attendance_date) AS month_number,
+           SUM(CASE WHEN LOWER(status) = 'absent' THEN 1 ELSE 0 END) AS absence,
+           SUM(CASE WHEN LOWER(status) = 'present' THEN 1 ELSE 0 END) AS present
+    FROM attendance
+    GROUP BY MONTH(attendance_date)
+    ORDER BY MONTH(attendance_date)
+");
+
+$month_names = [
+    1 => "Jan", 2 => "Feb", 3 => "Mar", 4 => "Apr",
+    5 => "May", 6 => "Jun", 7 => "Jul", 8 => "Aug",
+    9 => "Sep", 10 => "Oct", 11 => "Nov", 12 => "Dec"
+];
+
+if ($attendance_chart_query) {
+    while ($row = $attendance_chart_query->fetch_assoc()) {
+        $attendance_chart_data[(int)$row["month_number"]] = [
+            "absence" => (int)$row["absence"],
+            "present" => (int)$row["present"]
+        ];
+    }
+}
+
+$admin_chart_max = 0;
+
+foreach (range(1, 12) as $month_number) {
+    $absence = $attendance_chart_data[$month_number]["absence"] ?? 0;
+    $present = $attendance_chart_data[$month_number]["present"] ?? 0;
+    $admin_chart_max = max($admin_chart_max, $absence, $present);
+}
+
+$admin_attendance_chart = [];
+
+foreach (range(1, 12) as $month_number) {
+    $absence = $attendance_chart_data[$month_number]["absence"] ?? 0;
+    $present = $attendance_chart_data[$month_number]["present"] ?? 0;
+
+    $admin_attendance_chart[] = [
+        "month" => $month_names[$month_number],
+        "absence" => $absence,
+        "present" => $present,
+        "absence_width" => $admin_chart_max > 0 ? round(($absence / $admin_chart_max) * 100, 2) : 0,
+        "present_width" => $admin_chart_max > 0 ? round(($present / $admin_chart_max) * 100, 2) : 0
+    ];
+}
 ?>
 
 <!DOCTYPE html>
@@ -301,6 +394,7 @@ $teacher_monitor = $conn->query(
             <a href="#activities-monitor">Activities</a>
             <a href="#performance">Student Performance</a>
             <a href="#monitor">User Monitor</a>
+            <a href="#attendance-overview">Attendance Overview</a>
             <a href="#attendance">Attendance</a>
             <a href="#notifications">Notifications</a>
             <a href="#settings">Settings</a>
@@ -314,6 +408,37 @@ $teacher_monitor = $conn->query(
         <section id="dashboard" class="welcome">
             <h1>Welcome, <?php echo htmlspecialchars($admin_username); ?>!</h1>
             <p>This is the administrator dashboard.</p>
+        </section>
+
+        <section id="attendance-overview" class="attendance-box">
+
+            <div class="attendance-title">
+                <h2>ATTENDANCE OVERVIEW</h2>
+            </div>
+
+            <div class="legend">
+                <span><span class="blue-dot"></span>ABSENCE</span>
+                <span><span class="purple-dot"></span>PRESENT</span>
+            </div>
+
+            <?php foreach ($admin_attendance_chart as $chart): ?>
+                <div class="chart-row">
+                    <span class="month"><?php echo htmlspecialchars($chart["month"]); ?></span>
+
+                    <div class="chart-bars">
+                        <div class="absence-bar"
+                             style="width: <?php echo $chart["absence_width"]; ?>%;"
+                             title="Absence: <?php echo $chart["absence"]; ?>">
+                        </div>
+
+                        <div class="present-bar"
+                             style="width: <?php echo $chart["present_width"]; ?>%;"
+                             title="Present: <?php echo $chart["present"]; ?>">
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+
         </section>
 
         <section class="section">
@@ -544,6 +669,52 @@ $teacher_monitor = $conn->query(
                 </form>
 
             </div>
+
+        </section>
+
+        <section class="section">
+
+            <h2>Teacher Assignments</h2>
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Assignment</th>
+                        <th>Teacher</th>
+                        <th>Student</th>
+                        <th>Subject</th>
+                        <th>Due Date</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                <?php if ($all_assignments && $all_assignments->num_rows > 0): ?>
+
+                    <?php while ($row = $all_assignments->fetch_assoc()): ?>
+
+                        <tr>
+                            <td><?php echo htmlspecialchars($row["assignment_name"]); ?></td>
+                            <td><?php echo htmlspecialchars($row["teacher_name"]); ?></td>
+                            <td><?php echo htmlspecialchars($row["student_name"]); ?></td>
+                            <td><?php echo htmlspecialchars($row["subject_name"]); ?></td>
+                            <td><?php echo htmlspecialchars($row["due_date"]); ?></td>
+                        </tr>
+
+                    <?php endwhile; ?>
+
+                <?php else: ?>
+
+                    <tr>
+                        <td colspan="5">No assignments created yet.</td>
+                    </tr>
+
+                <?php endif; ?>
+
+                </tbody>
+
+            </table>
 
         </section>
 

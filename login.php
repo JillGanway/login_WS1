@@ -194,6 +194,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         </p>
 
+        <p> Username:admin
+            <br> password:Admin123
+        </p>
+
+        <p> username: Jills
+            <br> password: Ganz123
+        </p>
+
+        <p> usernams: Jillieyy
+            <br> password: Jillian05
+        </p>
+        
     </form>
 
 </div>
