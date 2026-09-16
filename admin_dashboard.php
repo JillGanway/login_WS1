@@ -194,6 +194,80 @@ $student_subjects = $conn->query(
      JOIN subjects sub ON ss.subject_id = sub.id
      ORDER BY u.full_name, sub.subject_name"
 );
+
+$teacher_activities = $conn->query(
+    "SELECT a.activity_name, a.activity_date,
+            t.full_name AS teacher_name,
+            s.full_name AS student_name,
+            sub.subject_name,
+            a.teacher_file,
+            a.student_file,
+            a.submission_status,
+            a.submitted_at
+     FROM activities a
+     JOIN users t ON a.teacher_id = t.id
+     JOIN users s ON a.student_id = s.id
+     JOIN subjects sub ON a.subject_id = sub.id
+     ORDER BY a.activity_date DESC, a.id DESC"
+);
+
+$student_performance = $conn->query(
+    "SELECT u.full_name AS student_name,
+            sub.subject_name,
+            sp.activity_score,
+            sp.quiz_score,
+            sp.performance_score
+     FROM student_performance sp
+     JOIN users u ON sp.student_id = u.id
+     JOIN subjects sub ON sp.subject_id = sub.id
+     ORDER BY u.full_name, sub.subject_name"
+);
+
+$all_attendance = $conn->query(
+    "SELECT s.full_name AS student_name,
+            t.full_name AS teacher_name,
+            sub.subject_name,
+            at.attendance_date,
+            at.status
+     FROM attendance at
+     JOIN users s ON at.student_id = s.id
+     JOIN users t ON at.teacher_id = t.id
+     JOIN subjects sub ON at.subject_id = sub.id
+     ORDER BY at.attendance_date DESC, at.id DESC"
+);
+
+$present_count = 0;
+$absent_count = 0;
+$late_count = 0;
+
+$count_attendance = $conn->query(
+    "SELECT status, COUNT(*) AS total
+     FROM attendance
+     GROUP BY status"
+);
+
+if ($count_attendance) {
+    while ($count = $count_attendance->fetch_assoc()) {
+        if (strtolower($count["status"]) === "present") {
+            $present_count = $count["total"];
+        } elseif (strtolower($count["status"]) === "absent") {
+            $absent_count = $count["total"];
+        } elseif (strtolower($count["status"]) === "late") {
+            $late_count = $count["total"];
+        }
+    }
+}
+
+$teacher_monitor = $conn->query(
+    "SELECT u.full_name AS teacher_name,
+            (SELECT COUNT(*) FROM attendance at WHERE at.teacher_id = u.id) AS attendance_count,
+            (SELECT COUNT(*) FROM activities a WHERE a.teacher_id = u.id) AS activity_count,
+            (SELECT COUNT(*) FROM assignments a WHERE a.teacher_id = u.id) AS assignment_count,
+            (SELECT COUNT(*) FROM student_performance sp WHERE sp.teacher_id = u.id) AS grade_count
+     FROM users u
+     WHERE u.role = 'teacher' AND u.is_admin = 0 AND u.status = 'approved'
+     ORDER BY u.full_name"
+);
 ?>
 
 <!DOCTYPE html>
@@ -223,6 +297,9 @@ $student_subjects = $conn->query(
             <a href="#students">Students</a>
             <a href="#teachers">Teachers</a>
             <a href="#assignments">Assignments</a>
+            <a href="#teacher-work">Teacher Work</a>
+            <a href="#activities-monitor">Activities</a>
+            <a href="#performance">Student Performance</a>
             <a href="#monitor">User Monitor</a>
             <a href="#attendance">Attendance</a>
             <a href="#notifications">Notifications</a>
@@ -590,9 +667,9 @@ $student_subjects = $conn->query(
 
         </section>
 
-        <section id="teachers" class="section">
+        <section id="teacher-work" class="section">
 
-            <h2>Teacher Monitor</h2>
+            <h2>Teacher Work Monitor</h2>
 
             <table>
 
@@ -600,20 +677,151 @@ $student_subjects = $conn->query(
                     <tr>
                         <th>Teacher</th>
                         <th>Attendance Taken</th>
-                        <th>School Work</th>
+                        <th>Activities</th>
                         <th>Assignments</th>
                         <th>Grades Updated</th>
                     </tr>
                 </thead>
 
                 <tbody>
+
+                <?php if ($teacher_monitor && $teacher_monitor->num_rows > 0): ?>
+
+                    <?php while ($teacher = $teacher_monitor->fetch_assoc()): ?>
+
+                        <tr>
+                            <td><?php echo htmlspecialchars($teacher["teacher_name"]); ?></td>
+                            <td><?php echo $teacher["attendance_count"]; ?></td>
+                            <td><?php echo $teacher["activity_count"]; ?></td>
+                            <td><?php echo $teacher["assignment_count"]; ?></td>
+                            <td><?php echo $teacher["grade_count"]; ?></td>
+                        </tr>
+
+                    <?php endwhile; ?>
+
+                <?php else: ?>
+
                     <tr>
-                        <td>No records yet</td>
-                        <td>0</td>
-                        <td>0</td>
-                        <td>0</td>
-                        <td>0</td>
+                        <td colspan="5">No teacher records yet.</td>
                     </tr>
+
+                <?php endif; ?>
+
+                </tbody>
+
+            </table>
+
+        </section>
+
+        <section id="activities-monitor" class="section">
+
+            <h2>Teacher Activities and Student Submissions</h2>
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Activity</th>
+                        <th>Teacher</th>
+                        <th>Student</th>
+                        <th>Subject</th>
+                        <th>Date</th>
+                        <th>Teacher File</th>
+                        <th>Student Status</th>
+                        <th>Student File</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                <?php if ($teacher_activities && $teacher_activities->num_rows > 0): ?>
+
+                    <?php while ($row = $teacher_activities->fetch_assoc()): ?>
+
+                        <tr>
+                            <td><?php echo htmlspecialchars($row["activity_name"]); ?></td>
+                            <td><?php echo htmlspecialchars($row["teacher_name"]); ?></td>
+                            <td><?php echo htmlspecialchars($row["student_name"]); ?></td>
+                            <td><?php echo htmlspecialchars($row["subject_name"]); ?></td>
+                            <td><?php echo htmlspecialchars($row["activity_date"]); ?></td>
+
+                            <td>
+                                <?php if (!empty($row["teacher_file"])): ?>
+                                    <a href="<?php echo htmlspecialchars($row["teacher_file"]); ?>" target="_blank">View File</a>
+                                <?php else: ?>
+                                    None
+                                <?php endif; ?>
+                            </td>
+
+                            <td>
+                                <?php echo htmlspecialchars($row["submission_status"] ?: "Not Submitted"); ?>
+                            </td>
+
+                            <td>
+                                <?php if (!empty($row["student_file"])): ?>
+                                    <a href="<?php echo htmlspecialchars($row["student_file"]); ?>" target="_blank">View Submission</a>
+                                <?php else: ?>
+                                    None
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+
+                    <?php endwhile; ?>
+
+                <?php else: ?>
+
+                    <tr>
+                        <td colspan="8">No activities uploaded yet.</td>
+                    </tr>
+
+                <?php endif; ?>
+
+                </tbody>
+
+            </table>
+
+        </section>
+
+        <section id="performance" class="section">
+
+            <h2>Student Performance</h2>
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Subject</th>
+                        <th>Activity Score</th>
+                        <th>Quiz Score</th>
+                        <th>Performance Score</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                <?php if ($student_performance && $student_performance->num_rows > 0): ?>
+
+                    <?php while ($row = $student_performance->fetch_assoc()): ?>
+
+                        <tr>
+                            <td><?php echo htmlspecialchars($row["student_name"]); ?></td>
+                            <td><?php echo htmlspecialchars($row["subject_name"]); ?></td>
+                            <td><?php echo htmlspecialchars($row["activity_score"]); ?></td>
+                            <td><?php echo htmlspecialchars($row["quiz_score"]); ?></td>
+                            <td><?php echo htmlspecialchars($row["performance_score"]); ?></td>
+                        </tr>
+
+                    <?php endwhile; ?>
+
+                <?php else: ?>
+
+                    <tr>
+                        <td colspan="5">No student performance records yet.</td>
+                    </tr>
+
+                <?php endif; ?>
+
                 </tbody>
 
             </table>
@@ -682,23 +890,63 @@ $student_subjects = $conn->query(
 
                 <div class="card">
                     <h3>Present</h3>
-                    <strong>0</strong>
+                    <strong><?php echo $present_count; ?></strong>
                     <p>Students Present</p>
                 </div>
 
                 <div class="card">
                     <h3>Absent</h3>
-                    <strong>0</strong>
+                    <strong><?php echo $absent_count; ?></strong>
                     <p>Students Absent</p>
                 </div>
 
                 <div class="card">
                     <h3>Late</h3>
-                    <strong>0</strong>
+                    <strong><?php echo $late_count; ?></strong>
                     <p>Late Students</p>
                 </div>
 
             </div>
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Teacher</th>
+                        <th>Subject</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                <?php if ($all_attendance && $all_attendance->num_rows > 0): ?>
+
+                    <?php while ($row = $all_attendance->fetch_assoc()): ?>
+
+                        <tr>
+                            <td><?php echo htmlspecialchars($row["student_name"]); ?></td>
+                            <td><?php echo htmlspecialchars($row["teacher_name"]); ?></td>
+                            <td><?php echo htmlspecialchars($row["subject_name"]); ?></td>
+                            <td><?php echo htmlspecialchars($row["attendance_date"]); ?></td>
+                            <td><?php echo htmlspecialchars($row["status"]); ?></td>
+                        </tr>
+
+                    <?php endwhile; ?>
+
+                <?php else: ?>
+
+                    <tr>
+                        <td colspan="5">No attendance records yet.</td>
+                    </tr>
+
+                <?php endif; ?>
+
+                </tbody>
+
+            </table>
 
         </section>
 

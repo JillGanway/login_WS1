@@ -26,6 +26,63 @@ $full_name = $user["full_name"];
 $username = $user["username"];
 $role = $user["role"];
 
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["submit_activity"])) {
+    $activity_id = intval($_POST["activity_id"]);
+
+    $check = $conn->prepare("
+        SELECT id, activity_name
+        FROM activities
+        WHERE id = ? AND student_id = ?
+    ");
+    $check->bind_param("ii", $activity_id, $user_id);
+    $check->execute();
+    $activity_result = $check->get_result();
+    $activity_data = $activity_result->fetch_assoc();
+    $check->close();
+
+    if ($activity_data && isset($_FILES["student_file"]) && $_FILES["student_file"]["error"] === UPLOAD_ERR_OK) {
+        $upload_dir = __DIR__ . "/uploads/activities/";
+
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0777, true);
+        }
+
+        $original_name = basename($_FILES["student_file"]["name"]);
+        $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+        $allowed_extensions = ["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "jpg", "jpeg", "png", "zip"];
+
+        if (in_array($extension, $allowed_extensions, true)) {
+            $safe_name = "student_" . $user_id . "_activity_" . $activity_id . "_" . time() . "." . $extension;
+            $target_file = $upload_dir . $safe_name;
+
+            if (move_uploaded_file($_FILES["student_file"]["tmp_name"], $target_file)) {
+                $relative_file = "uploads/activities/" . $safe_name;
+
+                $stmt = $conn->prepare("
+                    UPDATE activities
+                    SET student_file = ?, submission_status = 'Submitted', submitted_at = NOW()
+                    WHERE id = ? AND student_id = ?
+                ");
+                $stmt->bind_param("sii", $relative_file, $activity_id, $user_id);
+                $stmt->execute();
+                $stmt->close();
+
+                $log_stmt = $conn->prepare("
+                    INSERT INTO activity_logs (user_id, username, role, action)
+                    VALUES (?, ?, ?, ?)
+                ");
+                $log_action = "Submitted Activity: " . $activity_data["activity_name"];
+                $log_stmt->bind_param("isss", $user_id, $username, $role, $log_action);
+                $log_stmt->execute();
+                $log_stmt->close();
+            }
+        }
+    }
+
+    header("Location: student_dashboard.php#activities");
+    exit;
+}
+
 $subjects = $conn->query(
     "SELECT s.subject_name
      FROM student_subjects ss
@@ -40,6 +97,44 @@ $teachers = $conn->query(
      JOIN users u ON ts.teacher_id = u.id
      WHERE ts.student_id = $user_id
      ORDER BY u.full_name"
+);
+
+$assignments = $conn->query(
+    "SELECT s.subject_name, a.assignment_name, a.due_date
+     FROM assignments a
+     JOIN subjects s ON a.subject_id = s.id
+     WHERE a.student_id = $user_id
+     ORDER BY a.due_date ASC"
+);
+
+$activities = $conn->query(
+    "SELECT a.id, s.subject_name, a.activity_name, a.activity_date,
+            a.teacher_file, a.student_file, a.submission_status, a.submitted_at
+     FROM activities a
+     JOIN subjects s ON a.subject_id = s.id
+     WHERE a.student_id = $user_id
+     ORDER BY a.activity_date DESC"
+);
+
+$grades = $conn->query(
+    "SELECT s.subject_name,
+            sp.activity_score,
+            sp.quiz_score,
+            sp.performance_score
+     FROM student_performance sp
+     JOIN subjects s ON sp.subject_id = s.id
+     WHERE sp.student_id = $user_id
+     ORDER BY s.subject_name"
+);
+
+$attendance = $conn->query(
+    "SELECT s.subject_name,
+            at.attendance_date,
+            at.status
+     FROM attendance at
+     JOIN subjects s ON at.subject_id = s.id
+     WHERE at.student_id = $user_id
+     ORDER BY at.attendance_date DESC"
 );
 ?>
 
@@ -154,47 +249,44 @@ $teachers = $conn->query(
             <div class="attendance-box">
 
                 <div class="attendance-title">
-                    <h2>Attendance Overview</h2>
-
-                    <div class="legend">
-                        <span>
-                            <span class="blue-dot"></span>
-                            Present
-                        </span>
-
-                        <span>
-                            <span class="purple-dot"></span>
-                            Absent
-                        </span>
-                    </div>
+                    <h2>Attendance Records</h2>
                 </div>
 
-                <div class="chart-row">
-                    <div class="month">January</div>
+                <table>
 
-                    <div class="chart-bars">
-                        <div class="absence-bar january-absence"></div>
-                        <div class="present-bar january-present"></div>
-                    </div>
-                </div>
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
 
-                <div class="chart-row">
-                    <div class="month">February</div>
+                    <tbody>
 
-                    <div class="chart-bars">
-                        <div class="absence-bar february-absence"></div>
-                        <div class="present-bar february-present"></div>
-                    </div>
-                </div>
+                        <?php if ($attendance && $attendance->num_rows > 0): ?>
 
-                <div class="chart-row">
-                    <div class="month">March</div>
+                            <?php while ($row = $attendance->fetch_assoc()): ?>
 
-                    <div class="chart-bars">
-                        <div class="absence-bar march-absence"></div>
-                        <div class="present-bar march-present"></div>
-                    </div>
-                </div>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($row["subject_name"]); ?></td>
+                                    <td><?php echo date("F d, Y", strtotime($row["attendance_date"])); ?></td>
+                                    <td><?php echo htmlspecialchars($row["status"]); ?></td>
+                                </tr>
+
+                            <?php endwhile; ?>
+
+                        <?php else: ?>
+
+                            <tr>
+                                <td colspan="3">No attendance records yet.</td>
+                            </tr>
+
+                        <?php endif; ?>
+
+                    </tbody>
+
+                </table>
 
             </div>
 
@@ -209,7 +301,7 @@ $teachers = $conn->query(
                 <h3>Assignments</h3>
                 <p>View your assignments and submission status.</p>
 
-                <button type="button" onclick="document.getElementById('assignments').scrollIntoView()">
+                <button type="button" onclick="document.getElementById('assignments').scrollIntoView({behavior:'smooth'})">
                     View Assignments
                 </button>
 
@@ -220,7 +312,7 @@ $teachers = $conn->query(
                 <h3>Activities</h3>
                 <p>View your school activities and status.</p>
 
-                <button type="button" onclick="document.getElementById('activities').scrollIntoView()">
+                <button type="button" onclick="document.getElementById('activities').scrollIntoView({behavior:'smooth'})">
                     View Activities
                 </button>
 
@@ -231,7 +323,7 @@ $teachers = $conn->query(
                 <h3>Grades</h3>
                 <p>View your grades and academic results.</p>
 
-                <button type="button" onclick="document.getElementById('grades').scrollIntoView()">
+                <button type="button" onclick="document.getElementById('grades').scrollIntoView({behavior:'smooth'})">
                     View Grades
                 </button>
 
@@ -256,26 +348,26 @@ $teachers = $conn->query(
 
                 <tbody>
 
-                    <tr>
-                        <td>Front-End Development</td>
-                        <td>Web Portfolio</td>
-                        <td>September 20, 2026</td>
-                        <td>Pending</td>
-                    </tr>
+                    <?php if ($assignments && $assignments->num_rows > 0): ?>
 
-                    <tr>
-                        <td>Networking</td>
-                        <td>VLSM Activity</td>
-                        <td>September 22, 2026</td>
-                        <td>Pending</td>
-                    </tr>
+                        <?php while ($row = $assignments->fetch_assoc()): ?>
 
-                    <tr>
-                        <td>Database Management</td>
-                        <td>MySQL Activity</td>
-                        <td>September 25, 2026</td>
-                        <td>Pending</td>
-                    </tr>
+                            <tr>
+                                <td><?php echo htmlspecialchars($row["subject_name"]); ?></td>
+                                <td><?php echo htmlspecialchars($row["assignment_name"]); ?></td>
+                                <td><?php echo date("F d, Y", strtotime($row["due_date"])); ?></td>
+                                <td>Pending</td>
+                            </tr>
+
+                        <?php endwhile; ?>
+
+                    <?php else: ?>
+
+                        <tr>
+                            <td colspan="4">No assignments yet.</td>
+                        </tr>
+
+                    <?php endif; ?>
 
                 </tbody>
 
@@ -295,37 +387,72 @@ $teachers = $conn->query(
                         <th>Activity</th>
                         <th>Date</th>
                         <th>Status</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
 
                 <tbody>
 
-                    <tr>
-                        <td>Front-End Development</td>
-                        <td>HTML and CSS Activity</td>
-                        <td>September 14, 2026</td>
-                        <td>Completed</td>
-                    </tr>
+                    <?php if ($activities && $activities->num_rows > 0): ?>
 
-                    <tr>
-                        <td>Networking</td>
-                        <td>Subnetting Activity</td>
-                        <td>September 15, 2026</td>
-                        <td>Pending</td>
-                    </tr>
+                        <?php while ($row = $activities->fetch_assoc()): ?>
 
-                    <tr>
-                        <td>Database Management</td>
-                        <td>SQL Activity</td>
-                        <td>September 17, 2026</td>
-                        <td>Pending</td>
-                    </tr>
+                            <tr>
+                                <td><?php echo htmlspecialchars($row["subject_name"]); ?></td>
+                                <td><?php echo htmlspecialchars($row["activity_name"]); ?></td>
+                                <td><?php echo date("F d, Y", strtotime($row["activity_date"])); ?></td>
+                                <td><?php echo htmlspecialchars($row["submission_status"] ?: "Pending"); ?></td>
+                                <td>
+                                    <?php if ($row["teacher_file"]): ?>
+                                        <a href="<?php echo htmlspecialchars($row["teacher_file"]); ?>" target="_blank">View Activity File</a>
+                                    <?php endif; ?>
+
+                                    <?php if ($row["submission_status"] === "Submitted"): ?>
+                                        <span>Submitted</span>
+                                    <?php else: ?>
+                                        <button type="button"
+                                            onclick="openActivityModal(<?php echo (int)$row["id"]; ?>, '<?php echo htmlspecialchars(addslashes($row["activity_name"]), ENT_QUOTES); ?>')">
+                                            DO THE ACTIVITY
+                                        </button>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+
+                        <?php endwhile; ?>
+
+                    <?php else: ?>
+
+                        <tr>
+                            <td colspan="5">No activities yet.</td>
+                        </tr>
+
+                    <?php endif; ?>
 
                 </tbody>
 
             </table>
 
         </section>
+
+        <div id="activityModal" class="activity-modal">
+            <div class="activity-sheet">
+                <button type="button" class="close-modal" onclick="closeActivityModal()">×</button>
+
+                <h2>Submit Activity</h2>
+                <h3 id="modalActivityName"></h3>
+
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="submit_activity" value="1">
+                    <input type="hidden" name="activity_id" id="modalActivityId">
+
+                    <label>Upload your file</label>
+                    <input type="file" name="student_file" required
+                        accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.zip">
+
+                    <button type="submit">UPLOAD FILE</button>
+                </form>
+            </div>
+        </div>
 
         <section id="grades" class="section">
 
@@ -336,38 +463,44 @@ $teachers = $conn->query(
                 <thead>
                     <tr>
                         <th>Subject</th>
-                        <th>Prelim</th>
-                        <th>Midterm</th>
-                        <th>Final</th>
-                        <th>Grade</th>
+                        <th>Activity Score</th>
+                        <th>Quiz Score</th>
+                        <th>Performance Score</th>
+                        <th>Overall Grade</th>
                     </tr>
                 </thead>
 
                 <tbody>
 
-                    <tr>
-                        <td>Front-End Development</td>
-                        <td>90</td>
-                        <td>92</td>
-                        <td>--</td>
-                        <td>91</td>
-                    </tr>
+                    <?php if ($grades && $grades->num_rows > 0): ?>
 
-                    <tr>
-                        <td>Networking</td>
-                        <td>88</td>
-                        <td>90</td>
-                        <td>--</td>
-                        <td>89</td>
-                    </tr>
+                        <?php while ($row = $grades->fetch_assoc()): ?>
 
-                    <tr>
-                        <td>Database Management</td>
-                        <td>91</td>
-                        <td>93</td>
-                        <td>--</td>
-                        <td>92</td>
-                    </tr>
+                            <?php
+                            $overall = (
+                                $row["activity_score"] +
+                                $row["quiz_score"] +
+                                $row["performance_score"]
+                            ) / 3;
+                            ?>
+
+                            <tr>
+                                <td><?php echo htmlspecialchars($row["subject_name"]); ?></td>
+                                <td><?php echo htmlspecialchars($row["activity_score"]); ?></td>
+                                <td><?php echo htmlspecialchars($row["quiz_score"]); ?></td>
+                                <td><?php echo htmlspecialchars($row["performance_score"]); ?></td>
+                                <td><?php echo number_format($overall, 2); ?></td>
+                            </tr>
+
+                        <?php endwhile; ?>
+
+                    <?php else: ?>
+
+                        <tr>
+                            <td colspan="5">No grades available yet.</td>
+                        </tr>
+
+                    <?php endif; ?>
 
                 </tbody>
 
@@ -477,5 +610,80 @@ $teachers = $conn->query(
 
 </div>
 
+<style>
+.activity-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.activity-sheet {
+    width: 90%;
+    max-width: 550px;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.activity-sheet h2 {
+    margin-top: 0;
+}
+
+.activity-sheet h3 {
+    margin-bottom: 25px;
+}
+
+.activity-sheet input[type="file"] {
+    display: block;
+    width: 100%;
+    margin: 15px 0 25px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
+.activity-sheet button[type="submit"] {
+    padding: 12px 20px;
+    border: none;
+    cursor: pointer;
+}
+
+.close-modal {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    border: none;
+    background: none;
+    font-size: 28px;
+    cursor: pointer;
+}
+</style>
+
+<script>
+function openActivityModal(activityId, activityName) {
+    document.getElementById("modalActivityId").value = activityId;
+    document.getElementById("modalActivityName").textContent = activityName;
+    document.getElementById("activityModal").style.display = "flex";
+}
+
+function closeActivityModal() {
+    document.getElementById("activityModal").style.display = "none";
+}
+
+window.addEventListener("click", function(event) {
+    const modal = document.getElementById("activityModal");
+
+    if (event.target === modal) {
+        closeActivityModal();
+    }
+});
+</script>
+
 </body>
-</html>
+</html>          
