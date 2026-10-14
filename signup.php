@@ -51,8 +51,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 PASSWORD_DEFAULT
             );
 
-            /* CREATE ACCOUNT AS PENDING */
-
             $stmt = $conn->prepare(
                 "INSERT INTO users
                 (full_name, username, password, is_admin, role, status)
@@ -69,7 +67,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             if ($stmt->execute()) {
 
-                /* SEND NOTIFICATION TO ADMIN */
 
                 $title = "New Account Request";
 
@@ -119,7 +116,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Sign Up</title>
+    <title>Sign Up ⋆.˚</title>
 
     <link rel="stylesheet" href="signup.css">
 
@@ -142,12 +139,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <?php endif; ?>
 
         <p class="subtitle">
-            Welcome! Please create your account.
+            Welcome! Please create your account⋆.˚
         </p>
 
         <div class="input-box">
 
-            <label>Full Name</label>
+            <label>⋆ ˚｡⋆୨୧˚Full Name˚୨୧⋆｡</label>
 
             <input
                 type="text"
@@ -160,7 +157,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         <div class="input-box">
 
-            <label>Username</label>
+            <label>⋆ ˚｡⋆୨୧˚Username˚୨୧⋆｡</label>
 
             <input
                 type="text"
@@ -173,7 +170,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         <div class="input-box">
 
-            <label>User</label>
+            <label>⋆ ˚｡⋆୨୧˚User˚୨୧⋆｡</label>
 
             <div class="user">
 
@@ -202,7 +199,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         <div class="input-box">
 
-            <label>Password</label>
+            <label>⋆ ˚｡⋆୨୧˚Password˚୨୧⋆｡</label>
 
             <input
                 type="password"
@@ -215,7 +212,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         <div class="input-box">
 
-            <label>Confirm Password</label>
+            <label>⋆ ˚｡⋆୨୧˚Confirm Password˚୨୧⋆｡</label>
 
             <input
                 type="password"
@@ -232,7 +229,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         <p class="login-link">
 
-            Already have an account? :>
+            Already have an account? ⋆.˚
 
             <a href="login.php">Login</a>
 
