@@ -30,8 +30,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     }
 
-    /* ADMIN */
-
     elseif (
         $user["is_admin"] == 1 &&
         $username === "admin" &&
@@ -60,21 +58,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         exit;
     }
 
-    /* WRONG ADMIN PASSWORD */
-
     elseif ($user["is_admin"] == 1) {
 
         $message = "Invalid username or password.";
     }
 
-    /* PENDING ACCOUNT */
 
     elseif ($user["status"] !== "approved") {
 
         $message = "Your account is waiting for admin approval.";
     }
 
-    /* TEACHER / STUDENT */
 
     elseif (password_verify($password, $user["password"])) {
 
@@ -82,8 +76,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $_SESSION["full_name"] = $user["full_name"];
         $_SESSION["username"] = $user["username"];
         $_SESSION["role"] = $user["role"];
-
-        /* SAVE LOGIN HISTORY */
 
         $log = $conn->prepare(
             "INSERT INTO activity_logs
@@ -143,7 +135,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     <form class="login-box" method="POST">
 
-        <h2>*♡Welcomeʚ˚⋆🦢</h2>
+        <h2>₊˚⊹♡ Welcomeʚ⋆౨ৎ˚⟡˖ <br>────୨ৎ────
+        </h2>
 
         <?php if ($message): ?>
 
@@ -155,7 +148,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         <div class="input-box">
 
-            <label>Username</label>
+            <label>Username⋆ ˚｡⋆୨୧˚
+            </label>
 
             <input
                 type="text"
@@ -181,15 +175,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         </div>
 
         <button type="submit">
-            Login pls
+            Login pls ˃̵ᴗ˂̵
         </button>
 
         <p class="signup-link">
 
-            No account yet?
+            No account yet? ( ͒˃̩̩⌂˂̩̩ ͒)
 
             <a href="signup.php">
-                Sign up
+                Sign up ◝(˶˃ ᵕ ˂˶) ◜♡
             </a>
 
         </p>
